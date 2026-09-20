@@ -1,0 +1,18 @@
+# ==============================================================================
+# Workspace-level .dockerignore for knowthankyew multi-repository builds
+# Honored by Docker daemon when docker-compose builds with context: ..
+# ==============================================================================
+
+**/.git
+**/.github
+**/node_modules
+**/.venv
+**/bin
+**/obj
+**/*.mp4
+**/*.gif
+**/*.log
+**/.DS_Store
+**/mlflow_data
+**/dist
+**/artifacts

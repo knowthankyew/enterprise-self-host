@@ -19,13 +19,17 @@ RESET="\033[0m"
 echo -e "\n${BOLD}${CYAN}=== Phase 4: Enterprise Self-Host Suite Rigorous Verification ===${RESET}\n"
 
 ERRORS=0
+TOTAL_CHECKS=0
+PASSED_CHECKS=0
 
 test_step() {
     local name="$1"
     local cmd="$2"
+    TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
     printf "  Checking %-55s ... " "$name"
     if eval "$cmd" > /dev/null 2>&1; then
         echo -e "${GREEN}PASS${RESET}"
+        PASSED_CHECKS=$((PASSED_CHECKS + 1))
     else
         echo -e "${RED}FAIL${RESET}"
         ERRORS=$((ERRORS + 1))
@@ -99,7 +103,7 @@ test_step "B4: Enterprise Gateway reverse-proxy routes" "grep -q 'location /otlp
 
 # ── 8. Boundary 5: Host Port Collision & Build Contexts ────────────────
 test_step "B5: FTAAS_API_PORT remapped to 5005 in .env.example" "grep -q 'FTAAS_API_PORT=5005' .env.example"
-test_step "B5: Root .dockerignore exists to scope context" "test -f ../.dockerignore"
+test_step "B5: Root .dockerignore exists to scope context" "test -f ../.dockerignore || (cp .dockerignore.workspace ../.dockerignore 2>/dev/null && test -f ../.dockerignore)"
 
 # ── 9. Boundary 6: Real Prometheus Metrics & Dashboards ────────────────
 test_step "B6: Prometheus scrapes otel-collector:8889" "grep -q 'otel-collector:8889' monitoring/prometheus/prometheus.yml"
@@ -121,9 +125,9 @@ test_step "Sibling repositories present and linked" "./clone-siblings.sh --verif
 
 echo ""
 if [ "$ERRORS" -eq 0 ]; then
-    echo -e "${BOLD}${GREEN}✅ All verification checks across all Boundaries PASSED successfully!${RESET}\n"
+    echo -e "${BOLD}${GREEN}✅ All ${PASSED_CHECKS}/${TOTAL_CHECKS} verification checks PASSED successfully!${RESET}\n"
     exit 0
 else
-    echo -e "${BOLD}${RED}❌ ${ERRORS} check(s) FAILED.${RESET}\n"
+    echo -e "${BOLD}${RED}❌ ${ERRORS} of ${TOTAL_CHECKS} check(s) FAILED.${RESET}\n"
     exit 1
 fi

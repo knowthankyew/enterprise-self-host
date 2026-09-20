@@ -82,11 +82,26 @@ for entry in "${REPOS[@]}"; do
     fi
 done
 
+# Ensure root .dockerignore exists in the parent workspace to prevent daemon context bloat.
+# Docker only respects the .dockerignore located at the root of the build context (context: ..).
+if [ ! -f "$WORKSPACE_ROOT/.dockerignore" ]; then
+    if [ "$VERIFY_ONLY" = true ]; then
+        echo "  ⚠️  Missing workspace .dockerignore in $WORKSPACE_ROOT"
+        MISSING_COUNT=$((MISSING_COUNT + 1))
+    else
+        echo "  📄 Deploying workspace .dockerignore to $WORKSPACE_ROOT..."
+        cp "$SCRIPT_DIR/.dockerignore.workspace" "$WORKSPACE_ROOT/.dockerignore"
+        echo "  ✅ Deployed: $WORKSPACE_ROOT/.dockerignore"
+    fi
+else
+    echo "  ✅ Found workspace .dockerignore in $WORKSPACE_ROOT"
+fi
+
 if [ "$MISSING_COUNT" -gt 0 ] && [ "$VERIFY_ONLY" = true ]; then
     echo ""
-    echo "❌ Missing $MISSING_COUNT sibling repositories. Run './clone-siblings.sh' to download them."
+    echo "❌ Missing $MISSING_COUNT workspace requirement(s). Run './clone-siblings.sh' to download/deploy them."
     exit 1
 fi
 
 echo ""
-echo "✅ All required sibling repositories are present and linked in $WORKSPACE_ROOT."
+echo "✅ All required sibling repositories and workspace configurations are ready in $WORKSPACE_ROOT."
