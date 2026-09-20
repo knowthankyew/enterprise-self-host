@@ -27,6 +27,9 @@ if ! docker info &> /dev/null; then
     exit 1
 fi
 
+# Ensure sibling repositories are present and linked
+./clone-siblings.sh
+
 # Ensure .env exists
 if [ ! -f .env ]; then
     echo "ℹ️  Creating default .env from .env.example..."

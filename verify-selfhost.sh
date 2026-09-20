@@ -41,10 +41,16 @@ elif command -v docker &> /dev/null; then
     test_step "docker compose syntax" "docker compose -f docker-compose.yml config -q"
 fi
 
-# ── 2. YAML Syntax Verification (Ruby standard on macOS) ───────────────
+# ── 2. YAML Syntax Verification (Ruby or Python fallback) ─────────────
 yaml_check() {
     local file="$1"
-    ruby -ryaml -e "YAML.load_file('$file')" > /dev/null 2>&1
+    if command -v ruby &> /dev/null; then
+        ruby -ryaml -e "YAML.load_file('$file')" > /dev/null 2>&1
+    elif command -v python3 &> /dev/null; then
+        python3 -c "import yaml; yaml.safe_load_all(open('$file'))" > /dev/null 2>&1
+    else
+        return 1
+    fi
 }
 
 test_step "OTel Collector YAML syntax" "yaml_check collector/otel-collector-config.yaml"
@@ -70,11 +76,25 @@ test_step "B2: Prometheus admin API enabled in compose" "grep -q 'web.enable-adm
 test_step "B3: Literal AST env in privacy-telemetry" "grep -q 'import.meta.env.VITE_OTEL_EXPORTER_OTLP_ENDPOINT' ../privacy-telemetry/packages/privacy-telemetry/src/manager.ts"
 
 # ── 7. Boundary 4: Gateway Asset Routing & Vite Relative Base ──────────
-test_step "B4: lease-audit relative asset base" "grep -q \"base: './'\" ../lease-audit/vite.config.ts"
-test_step "B4: careCheck relative asset base" "grep -q \"base: './'\" ../careCheck/vite.config.ts"
-test_step "B4: paystub-check relative asset base" "grep -q \"base: './'\" ../paystub-check/vite.config.ts"
-test_step "B4: bill-of-rights-bot relative asset base" "grep -q \"base: './'\" ../bill-of-rights-bot/vite.config.ts"
-test_step "B4: warranty-watch relative asset base" "grep -q \"base: './'\" ../warranty-watch/vite.config.ts"
+check_relative_base() {
+    local primary="$1"
+    local alias="$2"
+    local target=""
+    if [ -f "../$primary/vite.config.ts" ]; then
+        target="../$primary/vite.config.ts"
+    elif [ -n "$alias" ] && [ -f "../$alias/vite.config.ts" ]; then
+        target="../$alias/vite.config.ts"
+    else
+        return 1
+    fi
+    grep -q "base: './'" "$target"
+}
+
+test_step "B4: lease-audit relative asset base" "check_relative_base lease-audit ''"
+test_step "B4: careCheck / care-check relative base" "check_relative_base careCheck care-check"
+test_step "B4: paystub-check relative asset base" "check_relative_base paystub-check ''"
+test_step "B4: bill-of-rights-bot relative asset base" "check_relative_base bill-of-rights-bot ''"
+test_step "B4: warranty-watch relative asset base" "check_relative_base warranty-watch ''"
 test_step "B4: Enterprise Gateway reverse-proxy routes" "grep -q 'location /otlp/' gateway/nginx.conf"
 
 # ── 8. Boundary 5: Host Port Collision & Build Contexts ────────────────
@@ -95,9 +115,13 @@ test_step "B7: Strict NetworkPolicy podSelector in place" "grep -q 'app.kubernet
 test_step "B8: CycloneDX SBOM generation in CI workflow" "grep -q 'cdxgen' .github/workflows/validate.yml"
 test_step "B8: Trivy vulnerability scanner in CI workflow" "grep -q 'trivy-action' .github/workflows/validate.yml"
 
+# ── 12. Workspace Sibling Orchestration ───────────────────────────────
+test_step "Sibling repository orchestrator executable" "test -x clone-siblings.sh"
+test_step "Sibling repositories present and linked" "./clone-siblings.sh --verify-only"
+
 echo ""
 if [ "$ERRORS" -eq 0 ]; then
-    echo -e "${BOLD}${GREEN}✅ All 31 checks across all 8 Boundaries PASSED successfully!${RESET}\n"
+    echo -e "${BOLD}${GREEN}✅ All verification checks across all Boundaries PASSED successfully!${RESET}\n"
     exit 0
 else
     echo -e "${BOLD}${RED}❌ ${ERRORS} check(s) FAILED.${RESET}\n"

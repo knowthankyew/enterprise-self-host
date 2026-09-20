@@ -73,6 +73,33 @@ enterprise-self-host/
 
 ### Prerequisites
 - Docker Engine & Docker Compose v2+
+- Git
+
+### Multi-Repository Architecture & Automated Sibling Setup
+The knowthankyew enterprise suite builds hardened production images directly from the source code of each reality engine.
+
+**Automated Setup (Recommended):**
+When you run `./start.sh`, it automatically runs `./clone-siblings.sh`. This verifies your parent workspace, clones any missing repositories from the [`knowthankyew`](https://github.com/knowthankyew) organization, and resolves folder naming aliases (`care-check` ↔ `careCheck`, `mail-stripper` ↔ `mailStripper`, `event-driven-ftaas` ↔ `ml`).
+
+You can also run the sibling setup manually before launching:
+```bash
+./clone-siblings.sh
+```
+
+**Expected Sibling Directory Layout:**
+```
+workspace/
+├── enterprise-self-host/     # This repository
+├── lease-audit/              # Housing reality engine
+├── careCheck/ (care-check)   # Medical billing engine
+├── paystub-check/            # Wage & tax audit engine
+├── bill-of-rights-bot/       # Constitutional rights engine
+├── warranty-watch/           # Warranty & renewal engine
+├── gradcast/                 # Higher-ed civic simulator
+├── mailStripper/             # Email de-surveillance engine
+├── ml/ (event-driven-ftaas)  # Fine-tuning & edge ML suite
+└── privacy-telemetry/        # Shared privacy telemetry SDK
+```
 
 ### A. Launch in Enterprise Mode (Full Suite + Observability)
 Attaches local OpenTelemetry Collector, Jaeger, Prometheus, and Grafana:
