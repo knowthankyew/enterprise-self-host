@@ -154,7 +154,7 @@ This instantly flushes collector batches, drops in-memory traces from Jaeger, an
 | **WarrantyWatch** | `kty-warranty-watch` | 80 | `8085` | `/warranty-watch/` |
 | **GradCast** | `kty-gradcast` | 5062 | `5062` | `/gradcast/` |
 | **MailStripper** | `kty-mail-stripper` | 5001 | `5001` | `/mail-stripper/` |
-| **FTaaS Control Plane** | `kty-ftaas-api` | 5000 | `5000` | `/ftaas/` |
+| **FTaaS Control Plane** | `kty-ftaas-api` | 5000 | `5005` | `/ftaas/` |
 | **RabbitMQ** | `kty-rabbitmq` | 5672 / 15672 | `5672` / `15672` | N/A |
 | **MLflow** | `kty-mlflow` | 5000 | `5002` | N/A |
 | **OTel Collector** | `kty-otel-collector` | 4317 / 4318 / 8889 | `4317` / `4318` / `8889` | `/otlp/` |

@@ -28,7 +28,9 @@ spec:
         - protocol: TCP
           port: 53
 
-    # 2. Allow intra-namespace pod-to-pod communication (e.g. backend to DB, app to collector)
+    # 2. Allow intra-namespace communication strictly between knowthankyew suite components
     - to:
-        - podSelector: {}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: knowthankyew
 {{- end }}

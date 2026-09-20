@@ -152,6 +152,17 @@ spec:
           ports:
             - containerPort: 9090
               name: http
+          {{- if .Values.observability.prometheus.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /prometheus
+          {{- end }}
+      {{- if .Values.observability.prometheus.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-prometheus-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -202,6 +213,17 @@ spec:
               value: "true"
             - name: GF_AUTH_ANONYMOUS_ORG_ROLE
               value: "Viewer"
+          {{- if .Values.observability.grafana.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/grafana
+          {{- end }}
+      {{- if .Values.observability.grafana.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-grafana-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service

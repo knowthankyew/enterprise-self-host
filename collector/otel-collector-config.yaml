@@ -19,6 +19,18 @@ receivers:
           allowed_headers:
             - "*"
 
+connectors:
+  # Transforms incoming privacy-scrubbed spans into Prometheus operational metrics
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+    dimensions:
+      - name: status
+      - name: rule_id
+      - name: jurisdiction
+    metrics_flush_interval: 15s
+
 processors:
   # Pillar 1: Prevent memory exhaustion on resource-constrained deployment nodes
   memory_limiter:
@@ -32,13 +44,14 @@ processors:
     timeout: 1s
 
   # Pillar 3: Boundary Enforcer - OpenTelemetry Transformation Language (OTTL)
-  # Confirms and tags that telemetry attributes conform to SAFE_ALLOWLIST_KEYS
+  # Strictly keeps only SAFE_ALLOWLIST_KEYS. Any unlisted attribute (e.g. clause text,
+  # snippet, PII) is permanently dropped at the collector boundary.
   transform:
     error_mode: ignore
     trace_statements:
       - context: span
         statements:
-          # Verify allowable operational keys (rule_id, status, duration_ms, etc.)
+          - keep_keys(attributes, ["rule_id", "rule_ids", "clause_count", "flagged_count", "duration_ms", "status", "job_id", "jurisdiction", "device", "adapter_size_bytes", "dataset_hash", "audit_status", "error_type", "service.name", "http.status_code", "http.method", "http.target", "audit.collector_verified", "audit.allowlist_enforced"])
           - set(attributes["audit.collector_verified"], "true")
           - set(attributes["audit.allowlist_enforced"], "true")
 
@@ -65,9 +78,9 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, transform, batch]
-      exporters: [otlp/jaeger, debug]
+      exporters: [otlp/jaeger, spanmetrics, debug]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, spanmetrics]
       processors: [memory_limiter, batch]
       exporters: [prometheus, debug]
   telemetry:

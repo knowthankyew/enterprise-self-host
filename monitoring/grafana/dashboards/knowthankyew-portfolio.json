@@ -85,7 +85,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "100 - (sum(otelcol_processor_filter_spans_filtered) or vector(0))",
+          "expr": "100 - (sum(rate(knowthankyew_otelcol_processor_refused_spans[5m])) or vector(0))",
           "refId": "A"
         }
       ]
@@ -144,7 +144,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "sum(otelcol_receiver_accepted_spans) or vector(0)",
+          "expr": "sum(knowthankyew_calls_total) or sum(knowthankyew_otelcol_receiver_accepted_spans) or vector(0)",
           "refId": "A"
         }
       ]
@@ -266,7 +266,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "sum(otelcol_processor_refused_spans) or vector(0)",
+          "expr": "sum(knowthankyew_otelcol_processor_refused_spans) or vector(0)",
           "refId": "A"
         }
       ]
@@ -366,8 +366,8 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "rate(otelcol_receiver_accepted_spans[1m])",
-          "legendFormat": "{{service}}",
+          "expr": "sum by (service_name) (rate(knowthankyew_calls_total[1m])) or rate(knowthankyew_otelcol_receiver_accepted_spans[1m])",
+          "legendFormat": "{{service_name}}",
           "refId": "A"
         }
       ]
@@ -431,7 +431,7 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "expr": "sum by (service_name) (otelcol_receiver_accepted_spans)",
+          "expr": "sum by (service_name) (knowthankyew_calls_total) or sum by (service) (knowthankyew_otelcol_receiver_accepted_spans)",
           "legendFormat": "{{service_name}}",
           "refId": "A"
         }

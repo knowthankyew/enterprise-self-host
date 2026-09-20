@@ -1,0 +1,102 @@
+{{- $root := . -}}
+
+{{- if and .Values.services.gradcast.enabled .Values.services.gradcast.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-gradcast-data
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: gradcast
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.gradcast.persistence.size | default "5Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.services.ftaasApi.enabled .Values.services.ftaasApi.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-data
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: ftaas-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.ftaasApi.persistence.size | default "5Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.services.ftaasWorker.enabled .Values.services.ftaasWorker.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-artifacts
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: ftaas-worker
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.ftaasWorker.persistence.size | default "20Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.services.mlflow.enabled .Values.services.mlflow.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-mlflow-data
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: mlflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.mlflow.persistence.size | default "10Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.observability.prometheus.enabled .Values.observability.prometheus.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-prometheus-data
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: prometheus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.observability.prometheus.persistence.size | default "10Gi" }}
+---
+{{- end }}
+
+{{- if and .Values.observability.grafana.enabled .Values.observability.grafana.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-grafana-data
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.observability.grafana.persistence.size | default "2Gi" }}
+{{- end }}

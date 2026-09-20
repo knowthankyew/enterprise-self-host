@@ -1,6 +1,6 @@
 # ==============================================================================
 # Prometheus Configuration - knowthankyew Enterprise Monitoring Pack
-# Scrapes local OpenTelemetry Collector & suite service health endpoints
+# Scrapes local OpenTelemetry Collector (spanmetrics & internal metrics)
 # ==============================================================================
 
 global:
@@ -9,28 +9,10 @@ global:
   scrape_timeout: 10s
 
 scrape_configs:
-  # Scrape OpenTelemetry Collector Prometheus exporter
+  # Scrape OpenTelemetry Collector metrics exporter (spanmetrics & pipeline stats)
   - job_name: "otel-collector"
     static_configs:
       - targets: ["otel-collector:8889"]
-
-  # Scrape FTaaS Control Plane
-  - job_name: "ftaas-api"
-    metrics_path: "/health"
-    static_configs:
-      - targets: ["ftaas-api:5000"]
-
-  # Scrape GradCast API
-  - job_name: "gradcast"
-    metrics_path: "/health"
-    static_configs:
-      - targets: ["gradcast:5062"]
-
-  # Scrape MailStripper status
-  - job_name: "mail-stripper"
-    metrics_path: "/api/strip/status"
-    static_configs:
-      - targets: ["mail-stripper:5001"]
 
   # Prometheus self-monitoring
   - job_name: "prometheus"

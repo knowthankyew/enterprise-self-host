@@ -40,6 +40,17 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.services.gradcast.resources | nindent 12 }}
+          {{- if .Values.services.gradcast.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          {{- end }}
+      {{- if .Values.services.gradcast.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-gradcast-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -211,6 +222,17 @@ spec:
           ports:
             - containerPort: 5000
               name: http
+          {{- if .Values.services.mlflow.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /mlflow
+          {{- end }}
+      {{- if .Values.services.mlflow.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-mlflow-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -277,6 +299,17 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.services.ftaasApi.resources | nindent 12 }}
+          {{- if .Values.services.ftaasApi.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          {{- end }}
+      {{- if .Values.services.ftaasApi.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-data
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -335,4 +368,15 @@ spec:
               value: "/data"
           resources:
             {{- toYaml .Values.services.ftaasWorker.resources | nindent 12 }}
+          {{- if .Values.services.ftaasWorker.persistence.enabled }}
+          volumeMounts:
+            - name: artifacts
+              mountPath: /data/artifacts
+          {{- end }}
+      {{- if .Values.services.ftaasWorker.persistence.enabled }}
+      volumes:
+        - name: artifacts
+          persistentVolumeClaim:
+            claimName: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-artifacts
+      {{- end }}
 {{- end }}

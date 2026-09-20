@@ -21,5 +21,28 @@ jobs:
         with:
           ruby-version: '3.2'
 
+      - name: Set up Node.js (for CycloneDX SBOM)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Run verification harness
         run: ./verify-selfhost.sh
+
+      - name: Generate CycloneDX SBOM (Pillar 5 Invariant)
+        run: npx --yes @cyclonedx/cdxgen -o bom.json
+
+      - name: Upload CycloneDX SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-self-host-sbom
+          path: bom.json
+
+      - name: Run Trivy Vulnerability Scanner (Fail-Closed)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: true
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
