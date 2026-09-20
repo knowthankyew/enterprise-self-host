@@ -9,6 +9,10 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,17 +30,30 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install Cosign (Sigstore)
+        uses: sigstore/cosign-installer@v3
+
       - name: Run verification harness
         run: ./verify-selfhost.sh
 
       - name: Generate CycloneDX SBOM (Pillar 5 Invariant)
         run: npx --yes @cyclonedx/cdxgen -o bom.json
 
-      - name: Upload CycloneDX SBOM Artifact
+      - name: Keyless Cryptographic Signing with Cosign (Pillar 5)
+        run: cosign sign-blob --yes --bundle bom.json.bundle bom.json
+
+      - name: Attest SBOM Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'bom.json'
+
+      - name: Upload CycloneDX SBOM & Signature Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
           name: enterprise-self-host-sbom
-          path: bom.json
+          path: |
+            bom.json
+            bom.json.bundle
 
       - name: Run Trivy Vulnerability Scanner (Fail-Closed)
         uses: aquasecurity/trivy-action@master

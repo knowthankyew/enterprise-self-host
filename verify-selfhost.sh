@@ -119,7 +119,11 @@ test_step "B7: Strict NetworkPolicy podSelector in place" "grep -q 'app.kubernet
 test_step "B8: CycloneDX SBOM generation in CI workflow" "grep -q 'cdxgen' .github/workflows/validate.yml"
 test_step "B8: Trivy vulnerability scanner in CI workflow" "grep -q 'trivy-action' .github/workflows/validate.yml"
 
-# ── 12. Workspace Sibling Orchestration ───────────────────────────────
+# ── 12. Boundary 9: Pillar 5 (Cryptographic Supply Chain Attestation) ─
+test_step "B9: Cosign keyless signing in CI workflow" "grep -q 'cosign-installer' .github/workflows/validate.yml"
+test_step "B9: Build provenance attestation in CI workflow" "grep -q 'attest-build-provenance' .github/workflows/validate.yml"
+
+# ── 13. Workspace Sibling Orchestration ───────────────────────────────
 test_step "Sibling repository orchestrator executable" "test -x clone-siblings.sh"
 test_step "Sibling repositories present and linked" "./clone-siblings.sh --verify-only"
 
