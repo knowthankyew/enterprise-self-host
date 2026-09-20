@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "KnowThankYew Enterprise Dashboards"
+    orgId: 1
+    folder: "KnowThankYew"
+    type: file
+    disableDeletion: true
+    editable: true
+    options:
+      path: /etc/grafana/dashboards

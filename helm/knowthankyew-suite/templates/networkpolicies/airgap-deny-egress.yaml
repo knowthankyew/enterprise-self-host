@@ -1,0 +1,34 @@
+{{- if and .Values.security.networkPolicies.enabled .Values.security.networkPolicies.airGapBlockInternetEgress }}
+# ==============================================================================
+# NetworkPolicy: Air-Gapped Egress Denial (Pillar 1 & 2 Invariant)
+# Blocks all outbound traffic to the public internet; allows only internal cluster DNS & pods
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" . }}-airgap-deny-egress
+  labels:
+    {{- include "knowthankyew-suite.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: knowthankyew
+  policyTypes:
+    - Egress
+  egress:
+    # 1. Allow internal cluster DNS resolution
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # 2. Allow intra-namespace pod-to-pod communication (e.g. backend to DB, app to collector)
+    - to:
+        - podSelector: {}
+{{- end }}

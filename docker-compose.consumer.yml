@@ -1,0 +1,58 @@
+# ==============================================================================
+# Consumer / Air-Gapped Compose Profile - knowthankyew Portfolio
+# 100% Zero-Egress Invariant: No Collectors, Volatile In-Memory Operations Only
+# Usage: docker compose -f docker-compose.yml -f docker-compose.consumer.yml up -d
+# ==============================================================================
+
+services:
+  # Eliminate OTLP endpoint from all web client builds (tree-shaking removes network code)
+  lease-audit:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ""
+
+  care-check:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ""
+
+  paystub-check:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ""
+
+  bill-of-rights-bot:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ""
+
+  warranty-watch:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ""
+
+  # Ensure backends operate in memory-only telemetry mode
+  gradcast:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=
+
+  mail-stripper:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=
+
+  ftaas-api:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=
+
+  # Disable external observability stack in consumer profile
+  otel-collector:
+    profiles: ["disabled"]
+
+  jaeger:
+    profiles: ["disabled"]
+
+  prometheus:
+    profiles: ["disabled"]
+
+  grafana:
+    profiles: ["disabled"]

@@ -1,0 +1,289 @@
+# ==============================================================================
+# knowthankyew Enterprise Self-Host Suite - Helm Values
+# ==============================================================================
+
+# Global operational mode: "enterprise" (enables local OTel ingestion) or "consumer" (air-gapped zero-egress)
+mode: enterprise
+
+# Global image registry configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# ── 1. Ingress Configuration ──────────────────────────────────────────
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: knowthankyew.local
+      paths:
+        - path: /lease-audit
+          pathType: Prefix
+          service: lease-audit
+          port: 80
+        - path: /care-check
+          pathType: Prefix
+          service: care-check
+          port: 80
+        - path: /paystub-check
+          pathType: Prefix
+          service: paystub-check
+          port: 80
+        - path: /bill-of-rights
+          pathType: Prefix
+          service: bill-of-rights-bot
+          port: 80
+        - path: /warranty-watch
+          pathType: Prefix
+          service: warranty-watch
+          port: 80
+        - path: /gradcast
+          pathType: Prefix
+          service: gradcast
+          port: 5062
+        - path: /mail-stripper
+          pathType: Prefix
+          service: mail-stripper
+          port: 5001
+        - path: /ftaas
+          pathType: Prefix
+          service: ftaas-api
+          port: 5000
+        - path: /grafana
+          pathType: Prefix
+          service: grafana
+          port: 3000
+        - path: /jaeger
+          pathType: Prefix
+          service: jaeger
+          port: 16686
+        - path: /prometheus
+          pathType: Prefix
+          service: prometheus
+          port: 9090
+        - path: /otlp
+          pathType: Prefix
+          service: otel-collector
+          port: 4318
+
+# ── 2. Client-Side Reality Engines ────────────────────────────────────
+apps:
+  leaseAudit:
+    enabled: true
+    image:
+      repository: knowthankyew/lease-audit
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  careCheck:
+    enabled: true
+    image:
+      repository: knowthankyew/care-check
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  paystubCheck:
+    enabled: true
+    image:
+      repository: knowthankyew/paystub-check
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  billOfRights:
+    enabled: true
+    image:
+      repository: knowthankyew/bill-of-rights-bot
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  warrantyWatch:
+    enabled: true
+    image:
+      repository: knowthankyew/warranty-watch
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# ── 3. Backend Services ───────────────────────────────────────────────
+services:
+  gradcast:
+    enabled: true
+    image:
+      repository: knowthankyew/gradcast
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  mailStripper:
+    enabled: true
+    image:
+      repository: knowthankyew/mail-stripper
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  ftaasApi:
+    enabled: true
+    image:
+      repository: knowthankyew/ftaas-api
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  ftaasWorker:
+    enabled: true
+    image:
+      repository: knowthankyew/ftaas-worker
+      tag: latest
+      pullPolicy: IfNotPresent
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+      limits:
+        cpu: 4000m
+        memory: 8Gi
+
+  rabbitmq:
+    enabled: true
+    image:
+      repository: rabbitmq
+      tag: 3-management
+      pullPolicy: IfNotPresent
+    user: guest
+    password: guest
+    persistence:
+      enabled: true
+      size: 5Gi
+
+  mlflow:
+    enabled: true
+    image:
+      repository: ghcr.io/mlflow/mlflow
+      tag: latest
+      pullPolicy: IfNotPresent
+    persistence:
+      enabled: true
+      size: 10Gi
+
+# ── 4. Local Observability Stack ──────────────────────────────────────
+observability:
+  collector:
+    enabled: true
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: "0.118.0"
+      pullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  jaeger:
+    enabled: true
+    image:
+      repository: jaegertracing/all-in-one
+      tag: "1.64"
+      pullPolicy: IfNotPresent
+    memoryMaxTraces: 10000
+
+  prometheus:
+    enabled: true
+    image:
+      repository: prom/prometheus
+      tag: "v3.1.0"
+      pullPolicy: IfNotPresent
+    persistence:
+      enabled: true
+      size: 10Gi
+
+  grafana:
+    enabled: true
+    image:
+      repository: grafana/grafana
+      tag: "11.4.0"
+      pullPolicy: IfNotPresent
+    persistence:
+      enabled: true
+      size: 2Gi
+
+# ── 5. Security & Network Policies ───────────────────────────────────
+security:
+  networkPolicies:
+    enabled: true
+    airGapBlockInternetEgress: true

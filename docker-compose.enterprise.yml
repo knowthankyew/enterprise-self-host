@@ -1,0 +1,45 @@
+# ==============================================================================
+# Enterprise Observability Overlay - knowthankyew Portfolio
+# Attaches local OTel Collector, Jaeger, Prometheus & Grafana to the suite
+# Usage: docker compose -f docker-compose.yml -f docker-compose.enterprise.yml up -d
+# ==============================================================================
+
+services:
+  # Web clients compile with intranet reverse-proxy endpoint (eliminates browser CORS)
+  lease-audit:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:8080/otlp/v1/traces"
+
+  care-check:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:8080/otlp/v1/traces"
+
+  paystub-check:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:8080/otlp/v1/traces"
+
+  bill-of-rights-bot:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:8080/otlp/v1/traces"
+
+  warranty-watch:
+    build:
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: "http://localhost:8080/otlp/v1/traces"
+
+  # Backends route through cluster-internal OTLP gRPC endpoint
+  gradcast:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+
+  mail-stripper:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+
+  ftaas-api:
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317

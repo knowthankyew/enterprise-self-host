@@ -1,0 +1,231 @@
+services:
+  # ── 1. Enterprise Gateway & Portal ──────────────────────────────────
+  gateway:
+    image: nginx:alpine
+    container_name: kty-gateway
+    restart: unless-stopped
+    ports:
+      - "${PORTAL_PORT:-8080}:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/portal:/usr/share/nginx/html:ro
+    depends_on:
+      - lease-audit
+      - care-check
+      - paystub-check
+      - bill-of-rights-bot
+      - warranty-watch
+      - gradcast
+      - mail-stripper
+      - ftaas-api
+
+  # ── 2. Client-Side Reality Engines (Vite/React/TS) ───────────────────
+  lease-audit:
+    build:
+      context: ..
+      dockerfile: lease-audit/Dockerfile
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ${VITE_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    container_name: kty-lease-audit
+    restart: unless-stopped
+    ports:
+      - "${LEASE_AUDIT_PORT:-8081}:80"
+
+  care-check:
+    build:
+      context: ..
+      dockerfile: careCheck/Dockerfile
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ${VITE_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    container_name: kty-care-check
+    restart: unless-stopped
+    ports:
+      - "${CARE_CHECK_PORT:-8082}:80"
+
+  paystub-check:
+    build:
+      context: ..
+      dockerfile: paystub-check/Dockerfile
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ${VITE_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    container_name: kty-paystub-check
+    restart: unless-stopped
+    ports:
+      - "${PAYSTUB_CHECK_PORT:-8083}:80"
+
+  bill-of-rights-bot:
+    build:
+      context: ..
+      dockerfile: bill-of-rights-bot/Dockerfile
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ${VITE_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    container_name: kty-bill-of-rights-bot
+    restart: unless-stopped
+    ports:
+      - "${BILL_OF_RIGHTS_PORT:-8084}:80"
+
+  warranty-watch:
+    build:
+      context: ..
+      dockerfile: warranty-watch/Dockerfile
+      args:
+        VITE_OTEL_EXPORTER_OTLP_ENDPOINT: ${VITE_OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    container_name: kty-warranty-watch
+    restart: unless-stopped
+    ports:
+      - "${WARRANTY_WATCH_PORT:-8085}:80"
+
+  # ── 3. Backend Reality Engines ──────────────────────────────────────
+  gradcast:
+    build:
+      context: ../gradcast
+      dockerfile: Dockerfile
+    container_name: kty-gradcast
+    restart: unless-stopped
+    ports:
+      - "${GRADCAST_PORT:-5062}:5062"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${BACKEND_OTLP_ENDPOINT:-}
+    volumes:
+      - gradcast-data:/app/data
+
+  mail-stripper:
+    build:
+      context: ../mailStripper
+      dockerfile: Dockerfile
+    container_name: kty-mail-stripper
+    restart: unless-stopped
+    ports:
+      - "${MAIL_STRIPPER_PORT:-5001}:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${BACKEND_OTLP_ENDPOINT:-}
+
+  # ── 4. FTaaS Asynchronous Fine-Tuning Suite ─────────────────────────
+  broker:
+    image: rabbitmq:3-management
+    container_name: kty-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: kty-mlflow
+    restart: unless-stopped
+    ports:
+      - "${MLFLOW_PORT:-5002}:5000"
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --serve-artifacts
+      --artifacts-destination /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    volumes:
+      - mlflow-data:/mlflow
+
+  ftaas-api:
+    build:
+      context: ..
+      dockerfile: ml/src/FtaaSService.Api/Dockerfile
+    container_name: kty-ftaas-api
+    restart: unless-stopped
+    ports:
+      - "${FTAAS_API_PORT:-5000}:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - RabbitMQ__HostName=broker
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${BACKEND_OTLP_ENDPOINT:-}
+    volumes:
+      - ftaas-data:/app/data
+    depends_on:
+      - broker
+
+  ftaas-worker:
+    build:
+      context: ..
+      dockerfile: ml/src/FtaaSService.Worker/Dockerfile
+    container_name: kty-ftaas-worker
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_HOST=broker
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASS=${RABBITMQ_PASS:-guest}
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - DATA_ROOT=/data
+    volumes:
+      - ftaas-artifacts:/data/artifacts
+    depends_on:
+      - broker
+      - mlflow
+
+  # ── 5. Enterprise Observability Stack (Air-Gapped & Local Only) ─────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    container_name: kty-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics exporter
+    volumes:
+      - ./collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.64
+    container_name: kty-jaeger
+    restart: unless-stopped
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - MEMORY_MAX_TRACES=10000
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: kty-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: kty-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - jaeger
+
+volumes:
+  gradcast-data:
+  ftaas-data:
+  ftaas-artifacts:
+  mlflow-data:
+  prometheus-data:
+  grafana-data:

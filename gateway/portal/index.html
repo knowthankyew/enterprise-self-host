@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KnowThankYew Enterprise Self-Host Suite</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131b2e;
+      --card-hover: #1c2742;
+      --border: #23304d;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+    }
+    .badge-enterprise {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .badge-local {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    p.lead {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2rem 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      background: var(--card-hover);
+      border-color: var(--primary);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      flex-grow: 1;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .pillars {
+      background: rgba(19, 27, 46, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-top: 3rem;
+    }
+    .pillars h3 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .pillar-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .pillar-item {
+      font-size: 0.85rem;
+    }
+    .pillar-item strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge badge-enterprise">Phase 4: Turnkey Enterprise Self-Host Suite</div>
+      <h1>knowthankyew reality engines</h1>
+      <p class="lead">
+        Air-gapped consumer privacy defaults paired with turnkey enterprise observability.
+        All tools run locally with volatile-memory telemetry and strict fail-closed allowlists.
+      </p>
+    </header>
+
+    <!-- Client-Side Reality Engines -->
+    <div class="section-title">
+      <span>⚖️</span> Client-Side Reality Engines (100% In-Memory Document Analysis)
+    </div>
+    <div class="grid">
+      <a href="/lease-audit/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">LeaseAudit</span>
+            <span class="badge badge-local">ONNX WebGPU</span>
+          </div>
+          <p class="card-desc">Residential lease audit engine checking state tenant protection acts, habitability clauses, and predatory fee waivers.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Tool &rarr;</span>
+          <span>Port 80 /lease-audit/</span>
+        </div>
+      </a>
+
+      <a href="/care-check/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">CareCheck</span>
+            <span class="badge badge-local">HIPAA Invariant</span>
+          </div>
+          <p class="card-desc">Medical bill & hospital charity care reality engine auditing chargemaster markups against IRC § 501(r) and Medicare baselines.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Tool &rarr;</span>
+          <span>Port 80 /care-check/</span>
+        </div>
+      </a>
+
+      <a href="/paystub-check/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">PaystubCheck</span>
+            <span class="badge badge-local">FLSA Engine</span>
+          </div>
+          <p class="card-desc">Wage theft & overtime calculation engine validating statutory rates, meal break deductions, and itemized wage disclosures.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Tool &rarr;</span>
+          <span>Port 80 /paystub-check/</span>
+        </div>
+      </a>
+
+      <a href="/bill-of-rights/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Bill of Rights Bot</span>
+            <span class="badge badge-local">FTC Click-to-Cancel</span>
+          </div>
+          <p class="card-desc">Subscription terms & SaaS agreement auditing engine detecting auto-renewal traps, hidden arbitration, and cancellation blockers.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Tool &rarr;</span>
+          <span>Port 80 /bill-of-rights/</span>
+        </div>
+      </a>
+
+      <a href="/warranty-watch/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">WarrantyWatch</span>
+            <span class="badge badge-local">Magnuson-Moss</span>
+          </div>
+          <p class="card-desc">Product warranty & manual analyzer detecting unlawful tie-ins, right-to-repair restrictions, and implied warranty waivers.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Tool &rarr;</span>
+          <span>Port 80 /warranty-watch/</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Backend Engines -->
+    <div class="section-title">
+      <span>⚙️</span> Backend Reality & Fine-Tuning Engines
+    </div>
+    <div class="grid">
+      <a href="/gradcast/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">GradCast</span>
+            <span class="badge badge-enterprise">.NET 10 / Dapper</span>
+          </div>
+          <p class="card-desc">Higher education outcome & debt-to-income reality engine aggregating federal IPEDS and College Scorecard metrics.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch API & UI &rarr;</span>
+          <span>Port 5062 /gradcast/</span>
+        </div>
+      </a>
+
+      <a href="/mail-stripper/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">MailStripper</span>
+            <span class="badge badge-enterprise">.NET 10 / MimeKit</span>
+          </div>
+          <p class="card-desc">Email de-surveillance engine stripping tracking pixels, un-redirecting spyware tokens, and sanitizing email headers.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch API & UI &rarr;</span>
+          <span>Port 5001 /mail-stripper/</span>
+        </div>
+      </a>
+
+      <a href="/ftaas/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">FTaaS Control Plane</span>
+            <span class="badge badge-enterprise">LoRA Fine-Tuning</span>
+          </div>
+          <p class="card-desc">Asynchronous fine-tuning and edge ONNX export furnace running PEFT/LoRA on CPU/MPS with AMQP event streaming.</p>
+        </div>
+        <div class="card-meta">
+          <span>Launch Studio & API &rarr;</span>
+          <span>Port 5000 /ftaas/</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Observability Stack -->
+    <div class="section-title">
+      <span>🔭</span> Local Enterprise Observability Stack (Air-Gapped Telemetry)
+    </div>
+    <div class="grid">
+      <a href="/grafana/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Grafana Dashboards</span>
+            <span class="badge badge-enterprise">Port 3000</span>
+          </div>
+          <p class="card-desc">Unified privacy audit metrics, allowlist compliance rate, audit throughput, and service health monitors.</p>
+        </div>
+        <div class="card-meta">
+          <span>Open Dashboard &rarr;</span>
+          <span>/grafana/</span>
+        </div>
+      </a>
+
+      <a href="/jaeger/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Jaeger Tracing</span>
+            <span class="badge badge-enterprise">Port 16686</span>
+          </div>
+          <p class="card-desc">Distributed trace visualization with in-memory storage buffer. Inspect scrubbed audit spans in real-time.</p>
+        </div>
+        <div class="card-meta">
+          <span>Inspect Traces &rarr;</span>
+          <span>/jaeger/</span>
+        </div>
+      </a>
+
+      <a href="/prometheus/" class="card">
+        <div>
+          <div class="card-header">
+            <span class="card-title">Prometheus Metrics</span>
+            <span class="badge badge-enterprise">Port 9090</span>
+          </div>
+          <p class="card-desc">Local time-series metric engine scraping the OpenTelemetry Collector boundary and suite service endpoints.</p>
+        </div>
+        <div class="card-meta">
+          <span>Query Metrics &rarr;</span>
+          <span>/prometheus/</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- The 5 Pillars -->
+    <div class="pillars">
+      <h3>The 5 Core Architectural Invariants</h3>
+      <div class="pillar-list">
+        <div class="pillar-item">
+          <strong>1. Volatile Memory Telemetry</strong>
+          Zero network egress by default; volatile circular buffers; hard tombstone on Burn.
+        </div>
+        <div class="pillar-item">
+          <strong>2. Compile-Time Dead Code</strong>
+          OTLP endpoints resolved at build time; consumer CDN bundles physically cannot leak.
+        </div>
+        <div class="pillar-item">
+          <strong>3. Strict Key Allowlists</strong>
+          Non-allowlisted keys sanitized to [REDACTED_NOT_IN_ALLOWLIST] before storage.
+        </div>
+        <div class="pillar-item">
+          <strong>4. Honest Dynamic UI Claims</strong>
+          Central getPrivacyClaims() suppresses local claims and triggers amber enterprise banner.
+        </div>
+        <div class="pillar-item">
+          <strong>5. CI Supply-Chain Integrity</strong>
+          Automated CycloneDX SBOMs (bom.json); fail-closed dependency vulnerability gates.
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2026 knowthankyew open-source portfolio &bull; MIT License &bull; Zero Cloud Dependencies
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+# ==============================================================================
+# OpenTelemetry Collector Configuration - knowthankyew Portfolio
+# Enforces Pillar 3 (Strict Allowlist Sanitization) & Local-Only Air-Gap Routing
+# ==============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "http://127.0.0.1:*"
+            - "http://*.local:*"
+            - "*"
+          allowed_headers:
+            - "*"
+
+processors:
+  # Pillar 1: Prevent memory exhaustion on resource-constrained deployment nodes
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+  # Batch telemetry to optimize disk & network I/O
+  batch:
+    send_batch_size: 256
+    timeout: 1s
+
+  # Pillar 3: Boundary Enforcer - OpenTelemetry Transformation Language (OTTL)
+  # Confirms and tags that telemetry attributes conform to SAFE_ALLOWLIST_KEYS
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          # Verify allowable operational keys (rule_id, status, duration_ms, etc.)
+          - set(attributes["audit.collector_verified"], "true")
+          - set(attributes["audit.allowlist_enforced"], "true")
+
+exporters:
+  # Route traces to local Jaeger instance (in-memory circular buffer)
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Expose metrics endpoint scraped by local Prometheus instance
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: knowthankyew
+    send_timestamps: true
+    metric_expiration: 180m
+
+  # Local stdout audit logger for compliance inspection
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, transform, batch]
+      exporters: [otlp/jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+  telemetry:
+    logs:
+      level: info

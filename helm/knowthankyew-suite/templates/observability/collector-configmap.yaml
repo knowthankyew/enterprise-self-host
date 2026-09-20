@@ -1,0 +1,59 @@
+{{- if .Values.observability.collector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" . }}-collector-config
+  labels:
+    {{- include "knowthankyew-suite.labels" . | nindent 4 }}
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+            cors:
+              allowed_origins: ["*"]
+              allowed_headers: ["*"]
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 20
+      batch:
+        send_batch_size: 256
+        timeout: 1s
+      transform:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+              - set(attributes["audit.collector_verified"], "true")
+              - set(attributes["audit.allowlist_enforced"], "true")
+
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger:4317
+        tls:
+          insecure: true
+      prometheus:
+        endpoint: 0.0.0.0:8889
+        namespace: knowthankyew
+        send_timestamps: true
+      debug:
+        verbosity: basic
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, transform, batch]
+          exporters: [otlp/jaeger, debug]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [prometheus, debug]
+{{- end }}

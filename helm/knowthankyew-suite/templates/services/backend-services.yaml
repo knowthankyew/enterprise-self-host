@@ -1,0 +1,338 @@
+{{- $root := . -}}
+
+{{- if .Values.services.gradcast.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-gradcast
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: gradcast
+spec:
+  replicas: {{ .Values.services.gradcast.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gradcast
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: gradcast
+    spec:
+      containers:
+        - name: gradcast
+          image: "{{ .Values.services.gradcast.image.repository }}:{{ .Values.services.gradcast.image.tag }}"
+          imagePullPolicy: {{ .Values.services.gradcast.image.pullPolicy }}
+          ports:
+            - containerPort: 5062
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "{{ if eq .Values.mode "enterprise" }}http://otel-collector:4317{{ end }}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.services.gradcast.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gradcast
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: gradcast
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5062
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: gradcast
+{{- end }}
+
+{{- if .Values.services.mailStripper.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-mail-stripper
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: mail-stripper
+spec:
+  replicas: {{ .Values.services.mailStripper.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mail-stripper
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: mail-stripper
+    spec:
+      containers:
+        - name: mail-stripper
+          image: "{{ .Values.services.mailStripper.image.repository }}:{{ .Values.services.mailStripper.image.tag }}"
+          imagePullPolicy: {{ .Values.services.mailStripper.image.pullPolicy }}
+          ports:
+            - containerPort: 5001
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "{{ if eq .Values.mode "enterprise" }}http://otel-collector:4317{{ end }}"
+          livenessProbe:
+            httpGet:
+              path: /api/strip/status
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.services.mailStripper.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mail-stripper
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: mail-stripper
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5001
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mail-stripper
+{{- end }}
+
+{{- if .Values.services.rabbitmq.enabled }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-rabbitmq
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: rabbitmq
+spec:
+  serviceName: rabbitmq
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: "{{ .Values.services.rabbitmq.image.repository }}:{{ .Values.services.rabbitmq.image.tag }}"
+          imagePullPolicy: {{ .Values.services.rabbitmq.image.pullPolicy }}
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ .Values.services.rabbitmq.user | quote }}
+            - name: RABBITMQ_DEFAULT_PASS
+              value: {{ .Values.services.rabbitmq.password | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: rabbitmq
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5672
+      name: amqp
+    - port: 15672
+      name: management
+  selector:
+    app.kubernetes.io/name: rabbitmq
+{{- end }}
+
+{{- if .Values.services.mlflow.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-mlflow
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mlflow
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: "{{ .Values.services.mlflow.image.repository }}:{{ .Values.services.mlflow.image.tag }}"
+          imagePullPolicy: {{ .Values.services.mlflow.image.pullPolicy }}
+          command:
+            - mlflow
+            - server
+            - --backend-store-uri
+            - sqlite:////mlflow/mlflow.db
+            - --serve-artifacts
+            - --artifacts-destination
+            - /mlflow/artifacts
+            - --host
+            - 0.0.0.0
+            - --port
+            - "5000"
+          ports:
+            - containerPort: 5000
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: mlflow
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: http
+      name: http
+  selector:
+    app.kubernetes.io/name: mlflow
+{{- end }}
+
+{{- if .Values.services.ftaasApi.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-api
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: ftaas-api
+spec:
+  replicas: {{ .Values.services.ftaasApi.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftaas-api
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: ftaas-api
+    spec:
+      containers:
+        - name: ftaas-api
+          image: "{{ .Values.services.ftaasApi.image.repository }}:{{ .Values.services.ftaasApi.image.tag }}"
+          imagePullPolicy: {{ .Values.services.ftaasApi.image.pullPolicy }}
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__Port
+              value: "5672"
+            - name: RabbitMQ__UserName
+              value: {{ .Values.services.rabbitmq.user | quote }}
+            - name: RabbitMQ__Password
+              value: {{ .Values.services.rabbitmq.password | quote }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "{{ if eq .Values.mode "enterprise" }}http://otel-collector:4317{{ end }}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.services.ftaasApi.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftaas-api
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: ftaas-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: ftaas-api
+{{- end }}
+
+{{- if .Values.services.ftaasWorker.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" $root }}-ftaas-worker
+  labels:
+    {{- include "knowthankyew-suite.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: ftaas-worker
+spec:
+  replicas: {{ .Values.services.ftaasWorker.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ftaas-worker
+  template:
+    metadata:
+      labels:
+        {{- include "knowthankyew-suite.labels" $root | nindent 8 }}
+        app.kubernetes.io/name: ftaas-worker
+    spec:
+      containers:
+        - name: ftaas-worker
+          image: "{{ .Values.services.ftaasWorker.image.repository }}:{{ .Values.services.ftaasWorker.image.tag }}"
+          imagePullPolicy: {{ .Values.services.ftaasWorker.image.pullPolicy }}
+          env:
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: {{ .Values.services.rabbitmq.user | quote }}
+            - name: RABBITMQ_PASS
+              value: {{ .Values.services.rabbitmq.password | quote }}
+            - name: MLFLOW_TRACKING_URI
+              value: "http://mlflow:5000"
+            - name: DATA_ROOT
+              value: "/data"
+          resources:
+            {{- toYaml .Values.services.ftaasWorker.resources | nindent 12 }}
+{{- end }}

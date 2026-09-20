@@ -1,0 +1,30 @@
+{{- if and .Values.security.networkPolicies.enabled .Values.observability.collector.enabled }}
+# ==============================================================================
+# NetworkPolicy: Allow OpenTelemetry Collector Ingestion
+# Permits intra-cluster pods to transmit scrubbed spans on 4317 (gRPC) / 4318 (HTTP)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "knowthankyew-suite.fullname" . }}-allow-collector-ingress
+  labels:
+    {{- include "knowthankyew-suite.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: otel-collector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: knowthankyew
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 8889
+{{- end }}

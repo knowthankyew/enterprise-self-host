@@ -1,0 +1,20 @@
+apiVersion: v2
+name: knowthankyew-suite
+description: Turnkey Enterprise Self-Host Suite for the knowthankyew Reality Engines & Observability Pack
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - privacy
+  - air-gapped
+  - reality-engines
+  - opentelemetry
+  - knowthankyew
+maintainers:
+  - name: knowthankyew contributors
+    url: https://github.com/knowthankyew
+home: https://github.com/knowthankyew
+sources:
+  - https://github.com/knowthankyew/privacy-telemetry
+  - https://github.com/knowthankyew/lease-audit
+  - https://github.com/knowthankyew/event-driven-ftaas
