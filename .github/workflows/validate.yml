@@ -33,6 +33,9 @@ jobs:
       - name: Install Cosign (Sigstore)
         uses: sigstore/cosign-installer@v3
 
+      - name: Clone sibling repositories
+        run: ./clone-siblings.sh
+
       - name: Run verification harness
         run: ./verify-selfhost.sh
 
@@ -40,9 +43,11 @@ jobs:
         run: npx --yes @cyclonedx/cdxgen -o bom.json
 
       - name: Keyless Cryptographic Signing with Cosign (Pillar 5)
+        if: github.ref == 'refs/heads/main'
         run: cosign sign-blob --yes --bundle bom.json.bundle bom.json
 
       - name: Attest SBOM Provenance
+        if: github.ref == 'refs/heads/main'
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'bom.json'
@@ -54,6 +59,7 @@ jobs:
           path: |
             bom.json
             bom.json.bundle
+          if-no-files-found: warn
 
       - name: Run Trivy Vulnerability Scanner (Fail-Closed)
         uses: aquasecurity/trivy-action@master
