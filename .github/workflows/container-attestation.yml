@@ -24,10 +24,10 @@ jobs:
             dockerfile: ./gateway/Dockerfile
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Install Cosign (Sigstore)
         uses: sigstore/cosign-installer@v3
@@ -42,7 +42,7 @@ jobs:
           echo "digest=$IMAGE_DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Attest Build Provenance (Pillar 5 Supply Chain)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ steps.build-image.outputs.image }}
           subject-digest: ${{ steps.build-image.outputs.digest }}
