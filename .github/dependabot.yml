@@ -5,6 +5,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    assignees:
+      - "knowthankyew"
     groups:
       containers:
         patterns:
@@ -14,6 +16,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    assignees:
+      - "knowthankyew"
     groups:
       actions:
         patterns:
