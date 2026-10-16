@@ -65,7 +65,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Run Trivy Vulnerability Scanner (Fail-Closed)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
         with:
           scan-type: 'config'
           hide-progress: true

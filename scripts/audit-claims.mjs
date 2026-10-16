@@ -31,7 +31,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -51,12 +51,12 @@ const PROHIBITED_WORDS = [
  */
 function loadYaml(filePath) {
   try {
-    const jsonStr = execSync(`ruby -ryaml -rjson -e 'puts JSON.generate(YAML.load_file(ARGV[0]))' "${filePath}"`, {
+    const jsonStr = execFileSync('ruby', ['-ryaml', '-rjson', '-e', 'puts JSON.generate(YAML.load_file(ARGV[0]))', filePath], {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     return JSON.parse(jsonStr);
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -161,34 +161,40 @@ export function auditOttlAllowlist(errors = []) {
     return;
   }
 
-  // 1. Verify transform processor has keep_keys statement
+  // 1. Verify transform processor has keep_keys statement in span context
   const transform = config.processors && config.processors.transform;
   if (!transform || !Array.isArray(transform.trace_statements)) {
     errors.push('collector/otel-collector-config.yaml missing processors.transform.trace_statements.');
     return;
   }
 
-  const allStatements = transform.trace_statements.flatMap(ts => ts.statements || []);
-  const keepKeysStmt = allStatements.find(st => typeof st === 'string' && st.includes('keep_keys(attributes'));
-  if (!keepKeysStmt) {
-    errors.push('collector/otel-collector-config.yaml must configure an OTTL keep_keys(attributes, [...]) statement.');
+  const spanContextStatements = transform.trace_statements.filter(ts => ts && ts.context === 'span');
+  if (spanContextStatements.length === 0) {
+    errors.push('collector/otel-collector-config.yaml missing trace_statements with context: span.');
     return;
   }
 
-  // Extract allowlisted keys from keep_keys(attributes, [...])
-  const match = keepKeysStmt.match(/keep_keys\s*\(\s*attributes\s*,\s*\[([^\]]+)\]/);
-  if (!match) {
-    errors.push('Unable to extract allowlisted keys array from keep_keys statement in collector config.');
+  const spanStatements = spanContextStatements.flatMap(ts => ts.statements || []);
+  const keepKeysStmts = spanStatements.filter(st => typeof st === 'string' && st.includes('keep_keys(attributes'));
+  if (keepKeysStmts.length === 0) {
+    errors.push('collector/otel-collector-config.yaml must configure an OTTL keep_keys(attributes, [...]) statement in context: span.');
     return;
   }
 
-  const rawKeys = match[1];
-  const allowlistedKeys = new Set(
-    rawKeys
+  // Extract allowlisted keys across all keep_keys statements in span context
+  const allowlistedKeys = new Set();
+  for (const stmt of keepKeysStmts) {
+    const match = stmt.match(/keep_keys\s*\(\s*attributes\s*,\s*\[([^\]]+)\]/);
+    if (!match) {
+      errors.push('Unable to extract allowlisted keys array from keep_keys statement in collector config.');
+      return;
+    }
+    match[1]
       .split(',')
       .map(k => k.trim().replace(/^["']|["']$/g, ''))
       .filter(Boolean)
-  );
+      .forEach(k => allowlistedKeys.add(k));
+  }
 
   // 2. Verify spanmetrics connector dimensions are strictly within allowlist
   const spanmetrics = config.connectors && config.connectors.spanmetrics;
@@ -298,6 +304,12 @@ export function auditCiSupplyChain(errors = []) {
     return;
   }
 
+  const valConfig = loadYaml(validatePath);
+  if (!valConfig) {
+    errors.push('Failed to parse .github/workflows/validate.yml as valid YAML.');
+    return;
+  }
+
   const valContent = readFileSync(validatePath, 'utf-8');
   if (!valContent.includes('cdxgen')) {
     errors.push('.github/workflows/validate.yml missing CycloneDX SBOM generation step.');
@@ -308,12 +320,18 @@ export function auditCiSupplyChain(errors = []) {
   if (!valContent.includes('attest-build-provenance')) {
     errors.push('.github/workflows/validate.yml missing SLSA build provenance attestation step.');
   }
-  if (!valContent.includes('trivy-action')) {
+
+  const validateSteps = valConfig.jobs?.validate?.steps || [];
+  const trivyStep = validateSteps.find(st => st && typeof st.uses === 'string' && st.uses.includes('trivy-action'));
+  if (!trivyStep) {
     errors.push('.github/workflows/validate.yml missing Trivy vulnerability scanner step.');
   } else {
-    // Assert Trivy is configured fail-closed (exit-code: 1 or '1')
-    if (!/exit-code:\s*['"]?1['"]?/.test(valContent)) {
-      errors.push('.github/workflows/validate.yml Trivy scanner must configure exit-code: \'1\' for fail-closed security enforcement.');
+    const exitCode = trivyStep.with && String(trivyStep.with['exit-code']);
+    if (exitCode !== '1') {
+      errors.push(`.github/workflows/validate.yml Trivy step must configure exit-code: '1' for fail-closed security enforcement (found: ${exitCode}).`);
+    }
+    if (!trivyStep.uses.includes('@') || trivyStep.uses.endsWith('@master')) {
+      errors.push('.github/workflows/validate.yml Trivy step must be pinned to an immutable commit SHA.');
     }
   }
 
@@ -345,13 +363,8 @@ export function auditVocabulary(errors = []) {
         const lines = content.split('\n');
         lines.forEach((line, idx) => {
           const trimmed = line.trim();
-          // Skip lines that explicitly discuss policy, guardrails, or banned lists
-          if (
-            trimmed.includes('audit-ignore') ||
-            trimmed.includes('prohibited') ||
-            trimmed.includes('banned') ||
-            trimmed.includes('unprovable')
-          ) {
+          // Skip lines that explicitly contain an audit-ignore marker
+          if (trimmed.includes('audit-ignore')) {
             return;
           }
 
