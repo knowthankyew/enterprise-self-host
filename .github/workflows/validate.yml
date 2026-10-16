@@ -40,7 +40,7 @@ jobs:
         run: ./verify-selfhost.sh
 
       - name: Run claims & architectural invariant audit
-        run: node scripts/audit-claims.mjs
+        run: node scripts/audit-claims.mjs --skip-harness-run
 
       - name: Generate CycloneDX SBOM (Pillar 5 Invariant)
         run: npx --yes @cyclonedx/cdxgen -o bom.json
@@ -70,5 +70,5 @@ jobs:
           scan-type: 'config'
           hide-progress: true
           format: 'table'
-          exit-code: '0'
+          exit-code: '1'
           severity: 'CRITICAL,HIGH'

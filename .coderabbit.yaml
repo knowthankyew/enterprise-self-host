@@ -68,7 +68,7 @@ reviews:
     - path: "helm/**"
       instructions: "Audit Kubernetes Helm charts and templates for air-gap NetworkPolicies (`airgap-deny-egress.yaml`), PersistentVolumeClaim bindings, non-root container security contexts, resource limits/requests, and valid service port mappings."
 
-    - path: "*.sh"
+    - path: "**/*.sh"
       instructions: "Audit bash scripts (`verify-selfhost.sh`, `burn-telemetry.sh`, `start.sh`, `stop.sh`, `clone-siblings.sh`) for strict error handling (`set -eo pipefail`), ShellCheck compliance, argument validation, and safe command execution without quoting flaws."
 
     - path: ".github/workflows/**"
