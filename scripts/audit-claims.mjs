@@ -215,6 +215,17 @@ export function auditOttlAllowlist(errors = []) {
       );
     }
   }
+
+  // 3. Verify service pipeline ordering includes transform before export
+  const tracesPipeline = config.service?.pipelines?.traces;
+  if (!tracesPipeline) {
+    errors.push('collector/otel-collector-config.yaml missing service.pipelines.traces.');
+  } else {
+    const procs = tracesPipeline.processors || [];
+    if (!procs.includes('transform')) {
+      errors.push('collector/otel-collector-config.yaml service.pipelines.traces must include "transform" processor to enforce allowlist before export.');
+    }
+  }
 }
 
 /**
@@ -250,7 +261,7 @@ export function auditGatewayAndPortal(errors = []) {
   const portalContent = readFileSync(portalPath, 'utf-8');
 
   // Check 1: HTML elements with remote attributes (script, link, img, iframe, source, audio, video, embed, object)
-  const tagRegex = /<(?:script|link|iframe|img|video|audio|source|embed|object)\b[^>]*\b(?:src|href|srcset|data|action|poster)\s*=\s*["'](?:https?:|\/\/)[^"']+/gi;
+  const tagRegex = /<(?:script|link|iframe|img|video|audio|source|embed|object)\b[^>]*\b(?:src|href|srcset|data|action|poster)\s*=\s*(?:["'](?:https?:|\/\/)[^"']+|[^\s>"']*(?:https?:|\/\/)[^\s>]*)/gi;
   const tagMatches = portalContent.match(tagRegex) || [];
   for (const m of tagMatches) {
     errors.push(`gateway/portal/index.html contains remote external asset attribute: ${m}`);
@@ -330,13 +341,16 @@ export function auditCiSupplyChain(errors = []) {
     if (exitCode !== '1') {
       errors.push(`.github/workflows/validate.yml Trivy step must configure exit-code: '1' for fail-closed security enforcement (found: ${exitCode}).`);
     }
-    if (!trivyStep.uses.includes('@') || trivyStep.uses.endsWith('@master')) {
-      errors.push('.github/workflows/validate.yml Trivy step must be pinned to an immutable commit SHA.');
+    const shaPattern = /^aquasecurity\/trivy-action@[0-9a-f]{40}(?:\s*#.*)?$/;
+    if (!shaPattern.test(trivyStep.uses)) {
+      errors.push(`.github/workflows/validate.yml Trivy step must be pinned to an immutable 40-character commit SHA (found: ${trivyStep.uses}).`);
     }
   }
 
   const attestPath = resolve(REPO_ROOT, '.github/workflows/container-attestation.yml');
-  if (existsSync(attestPath)) {
+  if (!existsSync(attestPath)) {
+    errors.push('Missing .github/workflows/container-attestation.yml workflow.');
+  } else {
     const attestContent = readFileSync(attestPath, 'utf-8');
     if (!attestContent.includes('attest-build-provenance')) {
       errors.push('.github/workflows/container-attestation.yml missing attest-build-provenance step.');
@@ -413,15 +427,10 @@ export function auditPortfolioMasterBrief(errors = [], options = {}) {
     return null;
   }
 
-  // Count executed checks: if requested via --skip-harness-run, verify harness exists and assert 36 checks
   const harnessPath = resolve(REPO_ROOT, 'verify-selfhost.sh');
   if (!existsSync(harnessPath)) {
     errors.push('Missing verify-selfhost.sh script.');
     return null;
-  }
-
-  if (options.skipHarnessRun) {
-    return { passedCount: docPassed, totalCount: docTotal, skippedExecution: true };
   }
 
   let actualPassed = 0;
@@ -475,8 +484,7 @@ export function runAllAudits(options = {}) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   console.log('=== Enterprise Self-Host Claims & Architectural Invariant Audit ===\n');
   const requireBrief = process.argv.includes('--require-brief');
-  const skipHarnessRun = process.argv.includes('--skip-harness-run');
-  const { errors, briefChecked } = runAllAudits({ requireBrief, skipHarnessRun });
+  const { errors, briefChecked } = runAllAudits({ requireBrief });
 
   if (errors.length > 0) {
     console.error(`[FAIL] Found ${errors.length} claims / architectural invariant violation(s):`);
