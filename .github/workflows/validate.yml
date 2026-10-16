@@ -39,6 +39,9 @@ jobs:
       - name: Run verification harness
         run: ./verify-selfhost.sh
 
+      - name: Run claims & architectural invariant audit
+        run: node scripts/audit-claims.mjs
+
       - name: Generate CycloneDX SBOM (Pillar 5 Invariant)
         run: npx --yes @cyclonedx/cdxgen -o bom.json
 

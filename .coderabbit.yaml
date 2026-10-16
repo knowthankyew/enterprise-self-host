@@ -1,0 +1,75 @@
+# CodeRabbit Configuration for enterprise-self-host
+# Targeted Audit Scope: Turnkey Docker Compose, Helm 3, OpenTelemetry Collector OTTL Allowlist, TSDB Purge & Supply Chain Attestation
+
+language: "en-US"
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  sequence_diagrams: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # Filter out static images, bundles, and SBOM artifacts
+  path_filters:
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.svg"
+    - "!**/*.gif"
+    - "!bom.json"
+    - "!bom.json.bundle"
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        You are performing an exhaustive architectural, security, and data privacy audit for "enterprise-self-host", the turnkey Docker Compose and Kubernetes Helm 3 deployment stack for the knowthankyew reality engine suite.
+        The stack provides local-only, air-gapped OpenTelemetry observability while preserving the 5 Pillars of the Portfolio.
+
+        Evaluate all code against these non-negotiable architectural invariants:
+
+        1. VOLATILE MEMORY TELEMETRY BY DEFAULT (PILLAR 1 - CRITICAL):
+           - In production runtime, telemetry must never leak beyond the self-hosted cluster perimeter.
+           - Jaeger traces must reside in volatile memory.
+           - `burn-telemetry.sh` must reliably execute a complete cluster-wide purge:
+             * Draining Jaeger in-memory traces via restart.
+             * Draining in-flight OTel Collector batch buffers via restart.
+             * Purging Prometheus TSDB time-series data completely via `/api/v1/admin/tsdb/delete_series` and `/api/v1/admin/tsdb/clean_tombstones`.
+           - `docker-compose.yml` must configure Prometheus with `--web.enable-admin-api` to enable the burn routine.
+
+        2. COMPILE-TIME DEAD CODE OVER RUNTIME TOGGLES (PILLAR 2 - CRITICAL):
+           - The air-gapped consumer profile (`docker-compose.consumer.yml`) must run zero telemetry containers (no OTel collector, no Jaeger, no Prometheus, no Grafana).
+           - Gateway reverse-proxy routes must isolate `/otlp/` proxying to internal collector endpoints without exposing collector management interfaces externally.
+
+        3. STRICT KEY ALLOWLISTS OVER BRITTLE DENYLISTS (PILLAR 3 - CRITICAL):
+           - `collector/otel-collector-config.yaml` must enforce strict OTTL (OpenTelemetry Transformation Language) transformations using `keep_keys(attributes, [...])`.
+           - Non-allowlisted attributes (such as full text clauses, user input, raw document snippets, or PII) must be dropped at the collector boundary before ingestion.
+           - Ensure Spanmetrics connector produces metric dimensions exclusively from scrubbed attributes.
+
+        4. HONEST UI CLAIMS & PORTAL INTEGRITY (PILLAR 4):
+           - The gateway catalog portal (`gateway/portal/index.html`) must display truthful, accurate privacy statements without exaggerated marketing claims.
+           - Prohibit unprovable adjectives ('bulletproof', 'conclusive', 'definitive', 'infinitely scalable') across all markdown and portal documentation.
+           - Portal landing page must load zero external assets (no remote fonts, scripts, or tracker pixels).
+
+        5. UNIVERSAL CI SUPPLY-CHAIN INTEGRITY & ATTESTATION (PILLAR 5):
+           - CI workflows (`.github/workflows/validate.yml` and `container-attestation.yml`) must enforce automated CycloneDX SBOM generation (`@cyclonedx/cdxgen`), Cosign keyless signing with Sigstore, SLSA build provenance attestation, and fail-closed vulnerability scanning via Trivy.
+
+    - path: "collector/**"
+      instructions: "Audit OpenTelemetry Collector configuration for memory limiter thresholds, OTTL keep_keys allowlist completeness, batch processor sizing, spanmetrics connector dimensions, and local exporter definitions."
+
+    - path: "monitoring/**"
+      instructions: "Audit Prometheus scrape configs (`prometheus.yml`) for local-only targets, scrape interval safety, and absence of invalid HTTP scrape paths. Audit Grafana provisioning files and dashboard JSON for query correctness and valid panel schemas."
+
+    - path: "gateway/**"
+      instructions: "Audit Nginx configuration (`nginx.conf`) for security headers (`X-Frame-Options SAMEORIGIN`, `X-Content-Type-Options nosniff`, `Referrer-Policy no-referrer`, `X-Local-Only-Guarantee`), CORS restrictions, reverse-proxy routing, and portal asset isolation. Verify `portal/index.html` has zero external network calls."
+
+    - path: "helm/**"
+      instructions: "Audit Kubernetes Helm charts and templates for air-gap NetworkPolicies (`airgap-deny-egress.yaml`), PersistentVolumeClaim bindings, non-root container security contexts, resource limits/requests, and valid service port mappings."
+
+    - path: "*.sh"
+      instructions: "Audit bash scripts (`verify-selfhost.sh`, `burn-telemetry.sh`, `start.sh`, `stop.sh`, `clone-siblings.sh`) for strict error handling (`set -eo pipefail`), ShellCheck compliance, argument validation, and safe command execution without quoting flaws."
+
+    - path: ".github/workflows/**"
+      instructions: "Audit GitHub Actions workflows for least-privilege token permissions (`contents: read`, `id-token: write`, `attestations: write`), pinned action versions, Sigstore Cosign signing, SLSA provenance attestation, and fail-closed security gates."
