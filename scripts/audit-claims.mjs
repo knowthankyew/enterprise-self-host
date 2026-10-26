@@ -32,20 +32,29 @@ import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync, execFileSync } from 'node:child_process';
+import {
+  stripLineComment,
+  stripBlockComments,
+  FORBIDDEN_NETWORK_REGEX,
+  testNetworkPrimitive,
+  scanDocumentationForVocabulary,
+  BANNED_VOCABULARY,
+} from './claims-linter-core.mjs';
+
+export {
+  stripLineComment,
+  stripBlockComments,
+  FORBIDDEN_NETWORK_REGEX,
+  testNetworkPrimitive,
+  scanDocumentationForVocabulary,
+  BANNED_VOCABULARY,
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const REPO_ROOT = resolve(__dirname, '..');
 const DEV_ROOT = resolve(REPO_ROOT, '..');
-
-const PROHIBITED_WORDS = [
-  /\bbullet-?proof\b/i,
-  /\brock\s+solid\b/i,
-  /\bconclusive\b/i,
-  /\bdefinitive\b/i,
-  /\binfinitely scalable\b/i,
-];
 
 /**
  * Safely parse YAML using Ruby's built-in YAML engine (installed on macOS & Ubuntu runner)
@@ -280,8 +289,13 @@ export function auditGatewayAndPortal(errors = []) {
   let scriptMatch;
   while ((scriptMatch = scriptRegex.exec(portalContent)) !== null) {
     const scriptBody = scriptMatch[1];
-    if (/\bfetch\s*\(\s*["'`]https?:|\bnew\s+WebSocket\s*\(|\bXMLHttpRequest\b|\bnavigator\.sendBeacon\b/.test(scriptBody)) {
-      errors.push('gateway/portal/index.html inline script contains remote network request API.');
+    const scriptLines = stripBlockComments(scriptBody).split('\n');
+    for (const sLine of scriptLines) {
+      const stripped = stripLineComment(sLine).trim();
+      if (!stripped) continue;
+      if (testNetworkPrimitive(stripped)) {
+        errors.push(`gateway/portal/index.html inline script contains forbidden network primitive: ${stripped}`);
+      }
     }
   }
 }
@@ -373,24 +387,13 @@ export function auditVocabulary(errors = []) {
         if (entry.name !== '.git' && entry.name !== 'node_modules') {
           scanDir(fullPath);
         }
-      } else if (scanExtensions.some(ext => entry.name.endsWith(ext))) {
+      } else if (scanExtensions.some((ext) => entry.name.endsWith(ext))) {
         const content = readFileSync(fullPath, 'utf-8');
-        const lines = content.split('\n');
-        lines.forEach((line, idx) => {
-          const trimmed = line.trim();
-          // Skip lines that explicitly contain an audit-ignore marker
-          if (trimmed.includes('audit-ignore')) {
-            return;
-          }
-
-          for (const pattern of PROHIBITED_WORDS) {
-            if (pattern.test(line)) {
-              errors.push(
-                `Prohibited word violation in ${fullPath.replace(REPO_ROOT + '/', '')}:${idx + 1}: contains "${trimmed}"`
-              );
-            }
-          }
+        const relPath = fullPath.replace(REPO_ROOT + '/', '');
+        const vocabErrors = scanDocumentationForVocabulary(content, relPath, {
+          isPermittedLine: (line) => line.includes('audit-ignore'),
         });
+        errors.push(...vocabErrors);
       }
     }
   }
