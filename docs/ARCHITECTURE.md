@@ -1,6 +1,6 @@
 <!-- diagram-meta
   last-validated: 2026-10-26
-  validated-commit: 33589b1
+  validated-commit: 4793dce
   covers: [collector/**, helm/**, monitoring/**, gateway/**, docker-compose*.yml]
   generated-by: manual
 -->
