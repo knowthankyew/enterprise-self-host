@@ -40,7 +40,8 @@ const REPO_ROOT = resolve(__dirname, '..');
 const DEV_ROOT = resolve(REPO_ROOT, '..');
 
 const PROHIBITED_WORDS = [
-  /\bbulletproof\b/i,
+  /\bbullet-?proof\b/i,
+  /\brock\s+solid\b/i,
   /\bconclusive\b/i,
   /\bdefinitive\b/i,
   /\binfinitely scalable\b/i,
