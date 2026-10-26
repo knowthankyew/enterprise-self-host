@@ -44,8 +44,8 @@ flowchart TD
 
         subgraph ObservabilityStack["Local Enterprise Observability (Private VPC)"]
             OTelCollector["📡 OpenTelemetry Collector (:4317 / :4318)<br/><code>collector/otel-collector-config.yaml</code>"]
-            Prometheus["📊 Prometheus Time-Series DB (:9090)<br/><code>monitoring/prometheus.yml</code>"]
-            Grafana["📈 Grafana Dashboards (:3000)<br/><code>monitoring/dashboards</code>"]
+            Prometheus["📊 Prometheus Time-Series DB (:9090)<br/><code>monitoring/prometheus/prometheus.yml</code>"]
+            Grafana["📈 Grafana Dashboards (:3000)<br/><code>monitoring/grafana/dashboards</code>"]
         end
     end
 
@@ -129,8 +129,10 @@ enterprise-self-host/
 ├── gateway/
 │   └── nginx.conf               # Unified reverse proxy routing
 ├── monitoring/
-│   ├── prometheus.yml           # Prometheus scrape configurations
-│   └── dashboards/              # Grafana pre-built portfolio dashboards
+│   ├── prometheus/
+│   │   └── prometheus.yml       # Prometheus scrape configurations
+│   └── grafana/
+│       └── dashboards/          # Grafana pre-built portfolio dashboards
 ├── helm/                        # Production Kubernetes Helm chart
 ├── burn-telemetry.sh            # Global amnesiac state purge orchestrator
 ├── clone-siblings.sh            # Sibling repository sync script
