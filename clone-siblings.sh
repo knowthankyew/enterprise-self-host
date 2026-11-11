@@ -24,6 +24,14 @@ REPOS=(
     "mailStripper:mail-stripper:mail-stripper"
     "ml:event-driven-ftaas:event-driven-ftaas"
     "privacy-telemetry:privacy-telemetry:"
+    "genesis:genesis:"
+    "policy-packs:policy-packs:"
+    "knowthankyew-extension:knowthankyew-extension:"
+    "mail-stripper-imap:mail-stripper-imap:"
+    "unsubscribe-shield-ext:unsubscribe-shield-ext:"
+    "mac-screen-record:mac-screen-record:"
+    "kty-ntfs:kty-ntfs:"
+    "knowthankyew:knowthankyew:"
 )
 
 VERIFY_ONLY=false

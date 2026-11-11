@@ -18,6 +18,8 @@ services:
       - gradcast
       - mail-stripper
       - ftaas-api
+      - genesis
+      - surprisal-service
 
   # ── 2. Client-Side Reality Engines (Vite/React/TS) ───────────────────
   lease-audit:
@@ -145,10 +147,38 @@ services:
       - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
       - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${BACKEND_OTLP_ENDPOINT:-}
+      - SURPRISAL_SERVICE_URL=http://surprisal-service:5200
     volumes:
       - ftaas-data:/app/data
     depends_on:
       - broker
+      - surprisal-service
+
+  surprisal-service:
+    build:
+      context: ../ml/src/surprisal-service
+      dockerfile: Dockerfile
+    container_name: kty-surprisal
+    restart: unless-stopped
+    ports:
+      - "${SURPRISAL_PORT:-5200}:5200"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5200/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  genesis:
+    build:
+      context: ../genesis
+      dockerfile: Dockerfile
+    container_name: kty-genesis
+    restart: unless-stopped
+    command: ["server", "-allow-all-interfaces", "-http=:8080", "-tcp=:9000", "-redact"]
+    ports:
+      - "${GENESIS_PORT:-9002}:8080"
+      - "${GENESIS_TCP_PORT:-9000}:9000"
 
   ftaas-worker:
     build:

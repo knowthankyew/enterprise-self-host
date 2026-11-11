@@ -41,6 +41,13 @@ if docker ps --format '{{.Names}}' | grep -q "kty-prometheus"; then
     docker restart kty-prometheus
 fi
 
+# 4. Purge Genesis volatile in-memory log buffer (Amnesiac Purge via DELETE /logs)
+if docker ps --format '{{.Names}}' | grep -q "kty-genesis"; then
+    echo "⚡ Executing instant Amnesiac Purge on Genesis in-memory log engine..."
+    curl -X DELETE -s "http://localhost:${GENESIS_PORT:-9002}/logs" 2>/dev/null || true
+    docker restart kty-genesis
+fi
+
 echo ""
 echo "✅ Pillar 1 Invariant Verified: All in-memory spans and timeseries purged."
 echo "   External observability stores hold zero residual document traces."
