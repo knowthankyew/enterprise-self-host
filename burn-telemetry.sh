@@ -101,23 +101,19 @@ ensure_safe_dir_strict() {
         anc_owner=""
         IFS=$' \t\n' read -r anc_perms _ anc_owner _ < <(LC_ALL=C ls -ld "$anc" 2>/dev/null || true)
         case "$anc_perms" in
+            d????????[tT]*)
+                if [ ! -O "$anc" ] && [ "$anc_owner" != "root" ]; then
+                    echo "❌ Unsafe sticky ancestor directory for $label ($anc)." >&2
+                    return 1
+                fi
+                ;;
             d????w*)
                 echo "❌ Unsafe group-writable ancestor directory for $label ($anc: $anc_perms)." >&2
                 return 1
                 ;;
             d???????w*)
-                case "$anc_perms" in
-                    d????????[tT]*)
-                        if [ ! -O "$anc" ] && [ "$anc_owner" != "root" ]; then
-                            echo "❌ Unsafe world-writable ancestor directory for $label ($anc)." >&2
-                            return 1
-                        fi
-                        ;;
-                    *)
-                        echo "❌ Unsafe non-sticky world-writable ancestor directory for $label ($anc: $anc_perms)." >&2
-                        return 1
-                        ;;
-                esac
+                echo "❌ Unsafe non-sticky world-writable ancestor directory for $label ($anc: $anc_perms)." >&2
+                return 1
                 ;;
             d*) ;;
             *)

@@ -1277,18 +1277,16 @@ ensure_safe_dir_strict() {
   while [ "$anc" != "/" ] && [ -n "$anc" ]; do
     anc_perms="$(ls -ld "$anc" 2>/dev/null | awk '{print $1}')"
     case "$anc_perms" in
-      d????w*) return 1 ;;
-      d???????w*)
-        case "$anc_perms" in
-          d????????[tT]*)
-            if [ ! -O "$anc" ]; then
-              anc_owner="$(ls -ld "$anc" 2>/dev/null | awk '{print $3}')"
-              [ "$anc_owner" = "root" ] || return 1
-            fi
-            ;;
-          *) return 1 ;;
-        esac
+      d????????[tT]*)
+        if [ ! -O "$anc" ]; then
+          anc_owner="$(ls -ld "$anc" 2>/dev/null | awk '{print $3}')"
+          [ "$anc_owner" = "root" ] || return 1
+        fi
         ;;
+      d????w*) return 1 ;;
+      d???????w*) return 1 ;;
+      d*) ;;
+      *) return 1 ;;
     esac
     anc="$(dirname "$anc")"
   done
