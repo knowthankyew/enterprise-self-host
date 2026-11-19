@@ -37,13 +37,29 @@ test_step() {
 }
 
 # ── 1. Docker Compose Syntaxes ─────────────────────────────────────────
+COMPOSE_ARGV=()
 if command -v docker-compose &> /dev/null; then
-    test_step "docker-compose.yml syntax" "docker-compose -f docker-compose.yml config -q"
-    test_step "docker-compose.consumer.yml syntax" "docker-compose -f docker-compose.yml -f docker-compose.consumer.yml config -q"
-    test_step "docker-compose.enterprise.yml syntax" "docker-compose -f docker-compose.yml -f docker-compose.enterprise.yml config -q"
-elif command -v docker &> /dev/null; then
-    test_step "docker compose syntax" "docker compose -f docker-compose.yml config -q"
+    COMPOSE_ARGV=(docker-compose)
+elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
+    COMPOSE_ARGV=(docker compose)
 fi
+
+run_compose_config_check() {
+    GENESIS_AUTH_TOKEN=verify-only-placeholder "${COMPOSE_ARGV[@]}" "$@" config -q
+}
+
+if [ "${#COMPOSE_ARGV[@]}" -gt 0 ]; then
+    test_step "docker-compose.yml syntax" "run_compose_config_check -f docker-compose.yml"
+    test_step "docker-compose.consumer.yml syntax" "run_compose_config_check -f docker-compose.yml -f docker-compose.consumer.yml"
+    test_step "docker-compose.enterprise.yml syntax" "run_compose_config_check -f docker-compose.yml -f docker-compose.enterprise.yml"
+fi
+
+check_compose_fails_closed_missing_token() {
+    [ "${#COMPOSE_ARGV[@]}" -gt 0 ] || return 1
+    local err_out rc=0
+    err_out=$(GENESIS_AUTH_TOKEN='' "${COMPOSE_ARGV[@]}" -f docker-compose.yml config -q 2>&1) || rc=$?
+    [ "$rc" -ne 0 ] && printf '%s' "$err_out" | grep -q 'GENESIS_AUTH_TOKEN'
+}
 
 # ── 2. YAML Syntax Verification (Ruby or Python fallback) ─────────────
 yaml_check() {
@@ -69,6 +85,7 @@ test_step "Grafana Dashboard JSON schema" "python3 -c 'import json; json.load(op
 
 # ── 4. Boundary 1: Pillar 3 (OTTL Allowlist & Spanmetrics) ─────────────
 test_step "B1: OTel OTTL keep_keys allowlist enforcement" "grep -q 'keep_keys(attributes' collector/otel-collector-config.yaml"
+test_step "B1: OTel metric_statements & metrics transform pipeline" "grep -q 'metric_statements:' collector/otel-collector-config.yaml && grep -q 'metric_statements:' helm/knowthankyew-suite/files/otel-collector-config.yaml && grep -q 'files/otel-collector-config.yaml' helm/knowthankyew-suite/templates/observability/collector-configmap.yaml"
 test_step "B1: OTel spanmetrics connector configured" "grep -q 'spanmetrics:' collector/otel-collector-config.yaml"
 
 # ── 5. Boundary 2: Pillar 1 (Cluster Burn Routine) ─────────────────────
@@ -99,7 +116,7 @@ test_step "B4: careCheck / care-check relative base" "check_relative_base careCh
 test_step "B4: paystub-check relative asset base" "check_relative_base paystub-check ''"
 test_step "B4: bill-of-rights-bot relative asset base" "check_relative_base bill-of-rights-bot ''"
 test_step "B4: warranty-watch relative asset base" "check_relative_base warranty-watch ''"
-test_step "B4: Enterprise Gateway reverse-proxy routes" "grep -q 'location /otlp/' gateway/nginx.conf"
+test_step "B4: Enterprise Gateway reverse-proxy routes" "grep -q 'location \^~ /otlp/' gateway/nginx.conf"
 
 # ── 8. Boundary 5: Host Port Collision & Build Contexts ────────────────
 test_step "B5: FTAAS_API_PORT remapped to 5005 in .env.example" "grep -q 'FTAAS_API_PORT=5005' .env.example"
@@ -122,6 +139,15 @@ test_step "B8: Trivy vulnerability scanner in CI workflow" "grep -q 'trivy-actio
 # ── 12. Boundary 9: Pillar 5 (Cryptographic Supply Chain Attestation) ─
 test_step "B9: Cosign keyless signing in CI workflow" "grep -q 'cosign-installer' .github/workflows/validate.yml"
 test_step "B9: Build provenance attestation in CI workflow" "grep -q 'attest-build-provenance' .github/workflows/validate.yml"
+
+# ── 12b. Boundary 10: Genesis Auth & Loopback Hardening ───────────────
+test_step "B10: Genesis requires GENESIS_AUTH_TOKEN in compose" "grep -q 'GENESIS_AUTH_TOKEN:?' docker-compose.yml"
+if [ "${#COMPOSE_ARGV[@]}" -gt 0 ]; then
+    test_step "B10: Compose fails closed when GENESIS_AUTH_TOKEN unset" "check_compose_fails_closed_missing_token"
+fi
+test_step "B10: Genesis & Surprisal bind 127.0.0.1 loopback only" "grep -q '127.0.0.1:\${GENESIS_PORT:-9002}:8080' docker-compose.yml && grep -q '127.0.0.1:\${GENESIS_TCP_PORT:-9000}:9000' docker-compose.yml && grep -q '127.0.0.1:\${SURPRISAL_PORT:-5200}:5200' docker-compose.yml"
+test_step "B10: burn-telemetry.sh sends Bearer auth & fails loudly" "grep -q 'Authorization: Bearer' burn-telemetry.sh && grep -Eq \"curl .*--noproxy .* -fsS -X DELETE\" burn-telemetry.sh"
+test_step "B10b: Claims audit unit regression suite" "node --test scripts/audit-claims.test.mjs"
 
 # ── 13. Workspace Sibling Orchestration ───────────────────────────────
 test_step "Sibling repository orchestrator executable" "test -x clone-siblings.sh"

@@ -147,6 +147,7 @@ services:
       - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
       - RabbitMQ__Password=${RABBITMQ_PASS:-guest}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${BACKEND_OTLP_ENDPOINT:-}
+      - FTAAS_TELEMETRY_HMAC_KEY=${FTAAS_TELEMETRY_HMAC_KEY:-}
       - SURPRISAL_SERVICE_URL=http://surprisal-service:5200
     volumes:
       - ftaas-data:/app/data
@@ -161,7 +162,7 @@ services:
     container_name: kty-surprisal
     restart: unless-stopped
     ports:
-      - "${SURPRISAL_PORT:-5200}:5200"
+      - "127.0.0.1:${SURPRISAL_PORT:-5200}:5200"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5200/health')"]
       interval: 10s
@@ -176,9 +177,13 @@ services:
     container_name: kty-genesis
     restart: unless-stopped
     command: ["server", "-allow-all-interfaces", "-http=:8080", "-tcp=:9000", "-redact"]
+    # Genesis reads GENESIS_AUTH_TOKEN natively via config.LoadConfig() -> security.AuthMiddleware
+    # across HTTP routes (/, /logs, /burn, /query), avoiding CLI-arg exposure in /proc/<pid>/cmdline.
+    environment:
+      - GENESIS_AUTH_TOKEN=${GENESIS_AUTH_TOKEN:?GENESIS_AUTH_TOKEN must be set for Genesis HTTP auth}
     ports:
-      - "${GENESIS_PORT:-9002}:8080"
-      - "${GENESIS_TCP_PORT:-9000}:9000"
+      - "127.0.0.1:${GENESIS_PORT:-9002}:8080"
+      - "127.0.0.1:${GENESIS_TCP_PORT:-9000}:9000"
 
   ftaas-worker:
     build:
@@ -193,6 +198,7 @@ services:
       - RABBITMQ_PASS=${RABBITMQ_PASS:-guest}
       - MLFLOW_TRACKING_URI=http://mlflow:5000
       - DATA_ROOT=/data
+      - FTAAS_TELEMETRY_HMAC_KEY=${FTAAS_TELEMETRY_HMAC_KEY:-}
     volumes:
       - ftaas-artifacts:/data/artifacts
     depends_on:

@@ -101,6 +101,11 @@ workspace/
 └── privacy-telemetry/        # Shared privacy telemetry SDK
 ```
 
+> **Prerequisite (Both Modes — Fail-Closed Genesis Auth):** Export a bearer token before running either `./start.sh` mode (Docker Compose fails closed if `GENESIS_AUTH_TOKEN` is unset or empty):
+> ```bash
+> export GENESIS_AUTH_TOKEN=$(openssl rand -hex 32)
+> ```
+
 ### A. Launch in Enterprise Mode (Full Suite + Observability)
 Attaches local OpenTelemetry Collector, Jaeger, Prometheus, and Grafana:
 
@@ -188,3 +193,7 @@ This instantly flushes collector batches, drops in-memory traces from Jaeger, an
 | **Jaeger** | `kty-jaeger` | 16686 / 4317 | `16686` | `/jaeger/` |
 | **Prometheus** | `kty-prometheus` | 9090 | `9090` | `/prometheus/` |
 | **Grafana** | `kty-grafana` | 3000 | `3000` | `/grafana/` |
+| **Surprisal Arbiter** | `kty-surprisal` | 5200 | `127.0.0.1:5200` | Internal / Loopback Only |
+| **Genesis Log Engine** | `kty-genesis` | 8080 / 9000 | `127.0.0.1:9002` / `127.0.0.1:9000` *(conflict note: override `GENESIS_TCP_PORT` if 9000 is used by MinIO/Portainer/PHP-FPM)* | Loopback + `GENESIS_AUTH_TOKEN` Bearer Required |
+
+> **Genesis Authentication Required:** Set `GENESIS_AUTH_TOKEN` (e.g., `export GENESIS_AUTH_TOKEN=$(openssl rand -hex 32)`) before starting Docker Compose or running `./burn-telemetry.sh`. Compose fails closed if the token is unset or empty.

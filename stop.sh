@@ -9,6 +9,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 echo "🛑 Stopping all knowthankyew enterprise containers..."
-docker compose down
+GENESIS_AUTH_TOKEN="${GENESIS_AUTH_TOKEN:-stop-only-placeholder}" docker compose down
 
 echo "✅ All containers stopped cleanly."

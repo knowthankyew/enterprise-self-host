@@ -294,19 +294,19 @@
         </div>
       </a>
 
-      <a href="/surprisal/" class="card">
+      <div class="card">
         <div>
           <div class="card-header">
             <span class="card-title">Surprisal Arbiter</span>
             <span class="badge badge-enterprise">100% MIT Preflight</span>
           </div>
-          <p class="card-desc">Deterministic preflight verification and dataset ablation engine validating token surprisal distributions before training.</p>
+          <p class="card-desc">Deterministic preflight verification and dataset ablation engine validating token surprisal distributions before training (internal &amp; loopback only).</p>
         </div>
         <div class="card-meta">
-          <span>Health & Metrics &rarr;</span>
-          <span>Port 5200 /surprisal/</span>
+          <span>Loopback Only</span>
+          <span>127.0.0.1:5200</span>
         </div>
-      </a>
+      </div>
     </div>
 
     <!-- Observability Stack -->
@@ -314,19 +314,19 @@
       <span>🔭</span> Local Enterprise Observability Stack (Air-Gapped Telemetry)
     </div>
     <div class="grid">
-      <a href="/genesis/" class="card">
+      <div class="card">
         <div>
           <div class="card-header">
             <span class="card-title">Genesis Log Engine</span>
-            <span class="badge badge-enterprise">Go 1.24 &bull; 1M+ LPS</span>
+            <span class="badge badge-enterprise">Go 1.24 &bull; Bearer Auth</span>
           </div>
-          <p class="card-desc">High-speed volatile-memory telemetry sink with zero-pointer skip lists, PII redaction, and instant amnesiac purge.</p>
+          <p class="card-desc">High-speed volatile-memory telemetry sink with zero-pointer skip lists, PII redaction, and token-authenticated amnesiac purge.</p>
         </div>
         <div class="card-meta">
-          <span>Open Log Inbox &rarr;</span>
-          <span>Port 9002 /genesis/</span>
+          <span>Loopback + Bearer Auth</span>
+          <span>127.0.0.1:9002</span>
         </div>
-      </a>
+      </div>
       <a href="/grafana/" class="card">
         <div>
           <div class="card-header">
